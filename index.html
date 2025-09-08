@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖書通読チェックアプリ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .progress-message {
+            background: #e8f5e8;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .main-content {
+            display: flex;
+            min-height: 70vh;
+        }
+
+        .checklist-panel {
+            flex: 1;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+
+        .calendar-panel {
+            flex: 0 0 350px;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 70vh;
+            background: #fafafa;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-nav {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .calendar-nav:hover {
+            background: #5a6fd8;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 5px;
+            background: #e0e0e0;
+            font-size: 12px;
+        }
+
+        .calendar-day {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+            min-height: 40px;
+            background: white;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background: #f0f0f0;
+        }
+
+        .calendar-day.other-month {
+            color: #ccc;
+            background: #f9f9f9;
+        }
+
+        .calendar-day.today {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            font-weight: bold;
+        }
+
+        .calendar-day.completed {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .chapter-count {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .day-input-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin: 10px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .bible-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+
+        .testament {
+            margin-bottom: 20px;
+        }
+
+        .testament-title {
+            background: #f0f0f0;
+            padding: 10px;
+            font-weight: bold;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .book {
+            margin-bottom: 10px;
+        }
+
+        .book-title {
+            background: #f8f8f8;
+            padding: 8px 15px;
+            font-weight: bold;
+            color: #333;
+            border-left: 4px solid #667eea;
+        }
+
+        .chapters {
+            padding: 5px 15px;
+        }
+
+        .chapter-item {
+            display: inline-block;
+            margin: 3px;
+            padding: 5px 8px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chapter-item:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .chapter-item.completed {
+            background: #c8e6c9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .chapter-checkbox {
+            margin-right: 5px;
+        }
+
+        .chapter-link {
+            color: #1976d2;
+            text-decoration: none;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .bible-text {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .bible-iframe {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .calendar-panel {
+                flex: none;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                max-height: 30vh;
+            }
+            
+            .checklist-panel {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                max-height: 30vh;
+            }
+            
+            .bible-content {
+                max-height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>聖書通読チェックアプリ</h1>
+            <p>口語訳聖書を使った通読管理</p>
+        </div>
+        
+        <div class="progress-message" id="progressMessage">
+            今日の進捗を確認してください
+        </div>
+        
+        <div class="main-content">
+            <div class="calendar-panel">
+                <h3>読書カレンダー</h3>
+                <div class="calendar-header">
+                    <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
+                    <span id="currentMonth"></span>
+                    <button class="calendar-nav" onclick="changeMonth(1)">›</button>
+                </div>
+                <div id="calendarGrid"></div>
+            </div>
+            
+            <div class="checklist-panel" id="checklistPanel">
+                <!-- チェックリストがここに動的に生成されます -->
+            </div>
+            
+            <div class="bible-content" id="bibleContent">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>聖書本文表示</h3>
+                    <a href="https://www.wordproject.org/bibles/jp/" target="_blank" style="display: inline-block; padding: 8px 16px; background: #1976d2; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">口語訳聖書へ</a>
+                </div>
+                <p>左側のチェックリストから章を選択すると、口語訳聖書の本文が表示されます。</p>
+                <div id="bibleDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日付入力モーダル -->
+    <div class="day-input-modal" id="dayInputModal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader">章数を入力</div>
+            <div class="input-group">
+                <label for="chapterInput">読んだ章数:</label>
+                <input type="number" id="chapterInput" min="0" max="20" value="0">
+            </div>
+            <div class="input-group">
+                <label>
+                    <input type="checkbox" id="completedCheckbox"> この日の読書を完了
+                </label>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="saveDay()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 聖書の章データ
+        const bibleData = {
+            "旧約聖書": {
+                "創世記": 50, "出エジプト記": 40, "レビ記": 27, "民数記": 36, "申命記": 34,
+                "ヨシュア記": 24, "士師記": 21, "ルツ記": 4, "サムエル記上": 31, "サムエル記下": 24,
+                "列王記上": 22, "列王記下": 25, "歴代志上": 29, "歴代志下": 36, "エズラ記": 10,
+                "ネヘミヤ記": 13, "エステル記": 10, "ヨブ記": 42, "詩篇": 150, "箴言": 31,
+                "伝道の書": 12, "雅歌": 8, "イザヤ書": 66, "エレミヤ書": 52, "哀歌": 5,
+                "エゼキエル書": 48, "ダニエル書": 12, "ホセア書": 14, "ヨエル書": 3, "アモス書": 9,
+                "オバデヤ書": 1, "ヨナ書": 4, "ミカ書": 7, "ナホム書": 3, "ハバクク書": 3,
+                "ゼパニヤ書": 3, "ハガイ書": 2, "ゼカリヤ書": 14, "マラキ書": 4
+            },
+            "新約聖書": {
+                "マタイによる福音書": 28, "マルコによる福音書": 16, "ルカによる福音書": 24, "ヨハネによる福音書": 21,
+                "使徒行伝": 28, "ローマ人への手紙": 16, "コリント人への第一の手紙": 16, "コリント人への第二の手紙": 13,
+                "ガラテヤ人への手紙": 6, "エペソ人への手紙": 6, "ピリピ人への手紙": 4, "コロサイ人への手紙": 4,
+                "テサロニケ人への第一の手紙": 5, "テサロニケ人への第二の手紙": 3, "テモテへの第一の手紙": 6,
+                "テモテへの第二の手紙": 4, "テトスへの手紙": 3, "ピレモンへの手紙": 1, "ヘブル人への手紙": 13,
+                "ヤコブの手紙": 5, "ペテロの第一の手紙": 5, "ペテロの第二の手紙": 3, "ヨハネの第一の手紙": 5,
+                "ヨハネの第二の手紙": 1, "ヨハネの第三の手紙": 1, "ユダの手紙": 1, "ヨハネの黙示録": 22
+            }
+        };
+
+        // ローカルストレージのキー
+        const STORAGE_KEY = 'bible_reading_progress';
+        const DAILY_PROGRESS_KEY = 'daily_reading_progress';
+        const CALENDAR_DATA_KEY = 'calendar_reading_data';
+
+        // カレンダー関連の変数
+        let currentDate = new Date();
+        let selectedDate = null;
+
+        // 進捗データの取得
+        function getProgress() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        // 進捗データの保存
+        function saveProgress(progress) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+        }
+
+        // 今日の日付を取得（YYYY-MM-DD形式）
+        function getTodayKey() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // 今日の進捗を取得
+        function getTodayProgress() {
+            const saved = localStorage.getItem(DAILY_PROGRESS_KEY);
+            const dailyProgress = saved ? JSON.parse(saved) : {};
+            const today = getTodayKey();
+            return dailyProgress[today] || 0;
+        }
+
+        // 今日の進捗を保存
+        function saveTodayProgress(count) {
+            const saved = localStorage.getItem(DAILY_PROGRESS_KEY);
+            const dailyProgress = saved ? JSON.parse(saved) : {};
+            const today = getTodayKey();
+            dailyProgress[today] = count;
+            localStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify(dailyProgress));
+        }
+
+        // カレンダーデータの取得
+        function getCalendarData() {
+            const saved = localStorage.getItem(CALENDAR_DATA_KEY);
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        // カレンダーデータの保存
+        function saveCalendarData(data) {
+            localStorage.setItem(CALENDAR_DATA_KEY, JSON.stringify(data));
+        }
+
+        // 日付文字列の取得（YYYY-MM-DD形式）
+        function getDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // カレンダーの生成
+        function generateCalendar() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            const currentMonthEl = document.getElementById('currentMonth');
+            
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            currentMonthEl.textContent = `${year}年${month + 1}月`;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const calendarData = getCalendarData();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let html = '';
+            
+            // 曜日ヘッダー
+            const dayHeaders = ['日', '月', '火', '水', '木', '金', '土'];
+            dayHeaders.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // カレンダーの日付
+            for (let i = 0; i < 42; i++) {
+                const currentDateInLoop = new Date(startDate);
+                currentDateInLoop.setDate(startDate.getDate() + i);
+                
+                const dateKey = getDateKey(currentDateInLoop);
+                const dayData = calendarData[dateKey] || { chapters: 0, completed: false };
+                
+                let dayClass = 'calendar-day';
+                if (currentDateInLoop.getMonth() !== month) {
+                    dayClass += ' other-month';
+                }
+                if (currentDateInLoop.getTime() === today.getTime()) {
+                    dayClass += ' today';
+                }
+                if (dayData.completed) {
+                    dayClass += ' completed';
+                }
+                
+                html += `<div class="${dayClass}" onclick="openDayModal('${dateKey}')">`;
+                html += `<div>${currentDateInLoop.getDate()}</div>`;
+                if (dayData.chapters > 0) {
+                    html += `<div class="chapter-count">${dayData.chapters}章</div>`;
+                }
+                html += `</div>`;
+            }
+            
+            calendarGrid.innerHTML = html;
+        }
+
+        // 月の変更
+        function changeMonth(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            generateCalendar();
+        }
+
+        // 日付モーダルを開く
+        function openDayModal(dateKey) {
+            selectedDate = dateKey;
+            const calendarData = getCalendarData();
+            const dayData = calendarData[dateKey] || { chapters: 0, completed: false };
+            
+            const date = new Date(dateKey);
+            document.getElementById('modalHeader').textContent = `${date.getMonth() + 1}月${date.getDate()}日の読書記録`;
+            document.getElementById('chapterInput').value = dayData.chapters;
+            document.getElementById('completedCheckbox').checked = dayData.completed;
+            
+            document.getElementById('dayInputModal').style.display = 'flex';
+        }
+
+        // モーダルを閉じる
+        function closeModal() {
+            document.getElementById('dayInputModal').style.display = 'none';
+            selectedDate = null;
+        }
+
+        // 日付データを保存
+        function saveDay() {
+            if (!selectedDate) return;
+            
+            const chapters = parseInt(document.getElementById('chapterInput').value) || 0;
+            const completed = document.getElementById('completedCheckbox').checked;
+            
+            const calendarData = getCalendarData();
+            calendarData[selectedDate] = { chapters, completed };
+            saveCalendarData(calendarData);
+            
+            generateCalendar();
+            updateProgressMessage();
+            closeModal();
+        }
+
+        // チェックリストの生成
+        function generateChecklist() {
+            const panel = document.getElementById('checklistPanel');
+            const progress = getProgress();
+            let html = '';
+
+            Object.keys(bibleData).forEach(testament => {
+                html += `<div class="testament">`;
+                html += `<div class="testament-title">${testament}</div>`;
+                
+                Object.keys(bibleData[testament]).forEach(book => {
+                    const chapterCount = bibleData[testament][book];
+                    html += `<div class="book">`;
+                    html += `<div class="book-title">${book}</div>`;
+                    html += `<div class="chapters">`;
+                    
+                    for (let chapter = 1; chapter <= chapterCount; chapter++) {
+                        const chapterKey = `${book}_${chapter}`;
+                        const isCompleted = progress[chapterKey] || false;
+                        const completedClass = isCompleted ? 'completed' : '';
+                        
+                        html += `<div class="chapter-item ${completedClass}" data-book="${book}" data-chapter="${chapter}">`;
+                        html += `<input type="checkbox" class="chapter-checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleChapter('${chapterKey}', this.checked)">`;
+                        html += `<span>${chapter}章</span>`;
+                        html += `<a href="#" class="chapter-link" onclick="openBibleText('${book}', ${chapter})">📖</a>`;
+                        html += `</div>`;
+                    }
+                    
+                    html += `</div></div>`;
+                });
+                
+                html += `</div>`;
+            });
+
+            panel.innerHTML = html;
+        }
+
+        // チェック状態の切り替え
+        function toggleChapter(chapterKey, isChecked) {
+            const progress = getProgress();
+            
+            if (isChecked) {
+                progress[chapterKey] = true;
+                const todayCount = getTodayProgress() + 1;
+                saveTodayProgress(todayCount);
+            } else {
+                delete progress[chapterKey];
+                const todayCount = Math.max(0, getTodayProgress() - 1);
+                saveTodayProgress(todayCount);
+            }
+            
+            saveProgress(progress);
+            updateProgressMessage();
+            
+            // 視覚的フィードバック
+            const chapterItem = document.querySelector(`[data-book="${chapterKey.split('_')[0]}"][data-chapter="${chapterKey.split('_')[1]}"]`);
+            if (chapterItem) {
+                if (isChecked) {
+                    chapterItem.classList.add('completed');
+                } else {
+                    chapterItem.classList.remove('completed');
+                }
+            }
+        }
+
+        // 進捗メッセージの更新
+        function updateProgressMessage() {
+            const messageEl = document.getElementById('progressMessage');
+            const today = getTodayKey();
+            const calendarData = getCalendarData();
+            const todayData = calendarData[today] || { chapters: 0, completed: false };
+            const todayCount = todayData.chapters;
+            
+            if (todayCount === 0) {
+                messageEl.textContent = '今日は読めませんでしたね。';
+            } else if (todayCount < 3) {
+                messageEl.textContent = `今日は${todayCount}章読めました。頑張りましょう。`;
+            } else {
+                messageEl.textContent = `今日は${todayCount}章読めましたね。3章以上読めましたね。`;
+            }
+        }
+
+        // 聖書本文を開く
+        function openBibleText(book, chapter) {
+            const bibleDisplay = document.getElementById('bibleDisplay');
+            const salterraeUrl = `https://www.wordproject.org/bibles/jp/`;
+            
+            bibleDisplay.innerHTML = `
+                <h4>${book} ${chapter}章</h4>
+                <p>口語訳聖書の本文を表示するには、以下のリンクをクリックしてください：</p>
+                <div style="margin: 15px 0;">
+                    <a href="${salterraeUrl}" target="_blank" style="display: inline-block; padding: 10px 15px; background: #1976d2; color: white; text-decoration: none; border-radius: 4px; margin: 5px;">口語訳聖書サイト</a>
+                </div>
+                <div style="margin-top: 20px;">
+                    <iframe src="${salterraeUrl}" class="bible-iframe" title="口語訳聖書"></iframe>
+                </div>
+            `;
+        }
+
+        // 初期化
+        function init() {
+            generateCalendar();
+            generateChecklist();
+            updateProgressMessage();
+        }
+
+        // ページ読み込み時に初期化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
