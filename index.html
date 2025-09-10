@@ -273,21 +273,58 @@
             font-weight: bold;
             color: #333;
             border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .book-toggle {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .book-toggle:hover {
+            background: #5a6fd8;
+        }
+
+        .book-content {
+            display: block;
+        }
+
+        .book-content.hidden {
+            display: none;
         }
 
         .chapters {
             padding: 5px 15px;
         }
 
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+            margin: 10px 0;
+        }
+
         .chapter-item {
-            display: inline-block;
-            margin: 3px;
-            padding: 5px 8px;
+            padding: 8px 4px;
             background: #f9f9f9;
             border: 1px solid #ddd;
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-align: center;
+            font-size: 12px;
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
         }
 
         .chapter-item:hover {
@@ -302,14 +339,18 @@
         }
 
         .chapter-checkbox {
-            margin-right: 5px;
+            margin-bottom: 2px;
         }
 
         .chapter-link {
             color: #1976d2;
             text-decoration: none;
-            font-size: 12px;
-            margin-left: 5px;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        .chapter-link:hover {
+            color: #0d47a1;
         }
 
         .bible-text {
@@ -597,6 +638,20 @@
             closeModal();
         }
 
+        // 書の表示/非表示を切り替え
+        function toggleBook(bookId) {
+            const bookContent = document.getElementById(`book-${bookId}`);
+            const toggleButton = document.getElementById(`toggle-${bookId}`);
+            
+            if (bookContent.classList.contains('hidden')) {
+                bookContent.classList.remove('hidden');
+                toggleButton.textContent = '非表示';
+            } else {
+                bookContent.classList.add('hidden');
+                toggleButton.textContent = '表示';
+            }
+        }
+        
         // チェックリストの生成
         function generateChecklist() {
             const panel = document.getElementById('checklistPanel');
@@ -611,8 +666,13 @@
                 Object.keys(bibleData[testament]).forEach(book => {
                     const chapterCount = bibleData[testament][book];
                     html += `<div class="book">`;
-                    html += `<div class="book-title">${book}</div>`;
-                    html += `<div class="chapters">`;
+                    const bookId = book.replace(/[^a-zA-Z0-9]/g, '');
+                    html += `<div class="book-title">`;
+                    html += `<span>${book} (${chapterCount}章)</span>`;
+                    html += `<button class="book-toggle" onclick="toggleBook('${bookId}')" id="toggle-${bookId}">表示</button>`;
+                    html += `</div>`;
+                    html += `<div class="chapters book-content" id="book-${book.replace(/[^a-zA-Z0-9]/g, '')}">`;            
+                    html += `<div class="chapter-grid">`;
                     
                     for (let chapter = 1; chapter <= chapterCount; chapter++) {
                         const chapterKey = `${book}_${chapter}`;
@@ -620,18 +680,20 @@
                         const isTodaySelected = todayList.includes(chapterKey);
                         const completedClass = isCompleted ? 'completed' : '';
                         
-                        html += `<div class="chapter-item ${completedClass}" data-book="${book}" data-chapter="${chapter}">`;
+                        html += `<div class="chapter-item ${completedClass}" data-book="${book}" data-chapter="${chapter}" title="${book} ${chapter}章">`;
+                        html += `<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">`;
+                        html += `<div style="font-weight: bold; font-size: 14px; margin-bottom: 2px;">${chapter}</div>`;
                         if (!isCompleted) {
                             html += `<input type="checkbox" class="chapter-checkbox" ${isTodaySelected ? 'checked' : ''} onchange="toggleChapter('${chapterKey}', this.checked)">`;
                         } else {
                             html += `<input type="checkbox" class="chapter-checkbox" checked disabled>`;
                         }
-                        html += `<span>${chapter}章</span>`;
-                        html += `<a href="#" class="chapter-link" onclick="openBibleText('${book}', ${chapter})">📖</a>`;
+                        html += `<a href="#" class="chapter-link" onclick="openBibleText('${book}', ${chapter})" title="聖書本文を表示">📖</a>`;
+                        html += `</div>`;
                         html += `</div>`;
                     }
                     
-                    html += `</div></div>`;
+                    html += `</div></div></div>`;
                 });
                 
                 html += `</div>`;
