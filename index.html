@@ -773,12 +773,28 @@
             saveTodayReadingList([]);
             
             // 表示を更新
-            generateCalendar();
             generateChecklist();
             updateTodayReadingDisplay();
             updateProgressMessage(chapterCount);
             
-            alert(`今日の読書を確定しました！${chapterCount}章読破です。`);
+            // 評価メッセージを表示
+            showEvaluationMessage(chapterCount);
+        }
+        
+        // 評価メッセージを表示
+        function showEvaluationMessage(chapterCount) {
+            let message = '';
+            let title = '今日の読書結果';
+            
+            if (chapterCount === 0) {
+                message = '今日は読めませんでした。明日は頑張りましょう。';
+            } else if (chapterCount >= 1 && chapterCount <= 2) {
+                message = `今日は${chapterCount}章読めました。3章まであと少しです。頑張りましょう。`;
+            } else if (chapterCount >= 3) {
+                message = `今日は${chapterCount}章読めましたね。3章以上読めました。頑張りましたね。`;
+            }
+            
+            alert(`${title}\n\n${message}`);
         }
         
         // 進捗メッセージの更新
