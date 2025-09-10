@@ -410,16 +410,6 @@
         
         <div class="main-content">
             <div class="left-panel">
-                <div class="calendar-section">
-                    <h3>読書カレンダー</h3>
-                    <div class="calendar-header">
-                        <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
-                        <span id="currentMonth"></span>
-                        <button class="calendar-nav" onclick="changeMonth(1)">›</button>
-                    </div>
-                    <div id="calendarGrid"></div>
-                </div>
-                
                 <div class="checklist-panel" id="checklistPanel">
                     <h3>聖書通読表</h3>
                     <!-- チェックリストがここに動的に生成されます -->
@@ -833,7 +823,6 @@
 
         // 初期化
         function init() {
-            generateCalendar();
             generateChecklist();
             updateTodayReadingDisplay();
             updateProgressMessage();
